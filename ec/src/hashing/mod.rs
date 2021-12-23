@@ -51,5 +51,5 @@ impl fmt::Display for HashToCurveError {
     }
 }
 
-#[cfg(test)]
-mod tests;
+// #[cfg(test)]
+// mod tests;

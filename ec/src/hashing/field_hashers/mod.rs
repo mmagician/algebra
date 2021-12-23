@@ -1,8 +1,8 @@
-mod default_hasher;
-pub use default_hasher::DefaultFieldHasher;
+// mod default_hasher;
+// pub use default_hasher::DefaultFieldHasher;
 mod ietf_hasher;
 pub use ietf_hasher::IETFHasher;
-
+mod expander;
 use ark_ff::{Field, PrimeField};
 
 // This function computes the length in bytes that a hash function should output
