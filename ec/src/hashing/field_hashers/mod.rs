@@ -1,5 +1,3 @@
-// mod default_hasher;
-// pub use default_hasher::DefaultFieldHasher;
 mod ietf_hasher;
 pub use ietf_hasher::IETFHasher;
 mod expander;
