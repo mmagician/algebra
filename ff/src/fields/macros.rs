@@ -88,7 +88,10 @@ macro_rules! impl_prime_field_serializer {
 
 macro_rules! impl_Fp {
     ($Fp:ident, $FpParameters:ident, $BigInteger:ident, $BigIntegerType:ty, $limbs:expr, $field_size:expr) => {
-        pub trait $FpParameters: FpParameters<BigInt = $BigIntegerType> {}
+        /// Trait for prime field parameters of size at most
+        #[doc = $field_size]
+        /// bits.
+        pub trait $FpParameters: FpParameters<BigInt = BigInt<$limbs>> {}
 
         /// Represents an element of the prime field F_p, where `p == P::MODULUS`.
         /// This type can represent elements in any field of size at most
@@ -100,7 +103,6 @@ macro_rules! impl_Fp {
             Hash(bound = ""),
             Clone(bound = ""),
             Copy(bound = ""),
-            Debug(bound = ""),
             PartialEq(bound = ""),
             Eq(bound = "")
         )]
@@ -112,6 +114,9 @@ macro_rules! impl_Fp {
         );
 
         impl<P> $Fp<P> {
+            /// Construct a new prime element directly from its underlying
+            /// `BigInteger` data type. The `BigInteger` should be in
+            /// Montgomery representation. If it is not, use `Self::from_repr`.
             #[inline]
             pub const fn new(element: $BigIntegerType) -> Self {
                 Self(element, PhantomData)
@@ -140,7 +145,7 @@ macro_rules! impl_Fp {
             /// of this method
             #[doc(hidden)]
             pub const fn const_from_str(limbs: &[u64], is_positive: bool, r2: $BigIntegerType, modulus: $BigIntegerType, inv: u64) -> Self {
-                let mut repr = $BigInteger([0; $limbs]);
+                let mut repr = BigInt::<$limbs>([0; $limbs]);
                 let mut i = 0;
                 while i < limbs.len() {
                     repr.0[i] = limbs[i];
@@ -250,6 +255,12 @@ macro_rules! impl_Fp {
             }
         }
 
+        impl<P> ark_std::fmt::Debug for $Fp<P> {
+            fn fmt(&self, f: &mut ark_std::fmt::Formatter<'_>) -> ark_std::fmt::Result {
+                ark_std::fmt::Debug::fmt(&self.0, f)
+            }
+        }
+
         impl<P: $FpParameters> Zero for $Fp<P> {
             #[inline]
             fn zero() -> Self {
@@ -276,10 +287,15 @@ macro_rules! impl_Fp {
 
         impl<P: $FpParameters> Field for $Fp<P> {
             type BasePrimeField = Self;
+            type BasePrimeFieldIter = iter::Once<Self::BasePrimeField>;
 
             fn extension_degree() -> u64 {
                 1
             }
+
+	        fn to_base_prime_field_elements(&self) -> Self::BasePrimeFieldIter {
+		        iter::once(*self)
+	        }
 
             fn from_base_prime_field_elems(elems: &[Self::BasePrimeField]) -> Option<Self> {
                 if elems.len() != (Self::extension_degree() as usize) {

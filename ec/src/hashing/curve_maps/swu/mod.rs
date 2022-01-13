@@ -1,10 +1,7 @@
-use core::marker::PhantomData;
-
-use ark_ff::bytes::ToBytes;
-
 use crate::models::SWModelParameters;
-use ark_ff::{vec::Vec, Field, One, SquareRootField, Zero};
+use ark_ff::{BigInteger, Field, One, PrimeField, SquareRootField, Zero};
 use ark_std::string::ToString;
+use core::marker::PhantomData;
 
 use crate::{
     hashing::{map_to_curve_hasher::MapToCurve, HashToCurveError},
@@ -17,24 +14,39 @@ use crate::{
 ///
 /// - [\[WB2019\]] <https://eprint.iacr.org/2019/403>
 pub trait SWUParams: SWModelParameters {
-    // we need an element of the base field which is not a square root see [1] Sect.
-    // 4. it is also convenient to have $g(b/xi * a)$ to be square. In general
-    // we use a xi with low absolute value coefficients when they are
-    // represented as element of ZZ.
-    const XI: Self::BaseField; // a nonsquare in Fq
-    const ZETA: Self::BaseField; // arbitatry root of unity
-    const XI_ON_ZETA_SQRT: Self::BaseField; // square root of THETA
+    /// An element of the base field that is not a square root see \[WB2019, Section 4\].
+    /// It is also convenient to have $g(b/xi * a)$ to be square. In general
+    /// we use a `XI` with low absolute value coefficients when they are
+    /// represented as integers.
+    const XI: Self::BaseField;
+    /// An arbitrary nonsquare conviniently chosen to be a primitve element of the base field
+    const ZETA: Self::BaseField;
+    /// Square root of `THETA = Self::XI/Self::ZETA`.
+    const XI_ON_ZETA_SQRT: Self::BaseField;
 }
 
 /// Represents the SWU hash-to-curve map defined by `P`.
 pub struct SWUMap<P: SWUParams> {
-    pub domain: Vec<u8>,
     curve_params: PhantomData<fn() -> P>,
 }
 
+/// Trait defining a parity method on the Field elements based on [\[1\]] Section 4.1
+///
+/// - [\[1\]] <https://datatracker.ietf.org/doc/draft-irtf-cfrg-hash-to-curve/>
+trait ElementParity<F: Field> {
+    fn parity(element: &F) -> bool {
+        element
+            .to_base_prime_field_elements()
+            .find(|&x| !x.is_zero())
+            .map_or(false, |x| x.into_repr().is_odd())
+    }
+}
+
+impl<P: SWUParams> ElementParity<P::BaseField> for SWUMap<P> {}
+
 impl<P: SWUParams> MapToCurve<GroupAffine<P>> for SWUMap<P> {
     /// Constructs a new map if `P` represents a valid map.
-    fn new_map_to_curve(domain: &[u8]) -> Result<Self, HashToCurveError> {
+    fn new_map_to_curve() -> Result<Self, HashToCurveError> {
         // Verifying that both XI and ZETA are non-squares
         if P::XI.legendre().is_qr() || P::ZETA.legendre().is_qr() {
             return Err(HashToCurveError::MapToCurveError(
@@ -66,7 +78,6 @@ impl<P: SWUParams> MapToCurve<GroupAffine<P>> for SWUMap<P> {
         }
 
         Ok(SWUMap {
-            domain: domain.to_vec(),
             curve_params: PhantomData,
         })
     }
@@ -157,17 +168,65 @@ impl<P: SWUParams> MapToCurve<GroupAffine<P>> for SWUMap<P> {
         let y = if gx1_square { y1 } else { y2 };
 
         let x_affine = num_x / div;
-        // 9. If sgn0(u) != sgn0(y), set y = -y
-        let mut a = [0u8; 128];
-        let mut b = [0u8; 128];
-        point.write(&mut a[..]).unwrap();
-        y.write(&mut b[..]).unwrap();
-        let y_affine = if a[0] % 2 == b[0] % 2 { -y } else { y };
+        let y_affine = if Self::parity(&y) { -y } else { y };
         let point_on_curve = GroupAffine::<P>::new(x_affine, y_affine, false);
         assert!(
             point_on_curve.is_on_curve(),
             "swu mapped to a point off the curve"
         );
         Ok(point_on_curve)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use ark_test_curves::bls12_381::{Fq, Fq2, Fq6};
+
+    impl ElementParity<Fq> for Fq {}
+    impl ElementParity<Fq2> for Fq2 {}
+    impl ElementParity<Fq6> for Fq6 {}
+
+    #[test]
+    fn test_parity_of_prime_field_elements() {
+        let a1 = Fq::from(0);
+        let a2 = Fq::from(1);
+        let a3 = Fq::from(10);
+        assert_eq!(Fq::parity(&a1), false);
+        assert_eq!(Fq::parity(&a2), true);
+        assert_eq!(Fq::parity(&a3), false);
+    }
+
+    #[test]
+    fn test_parity_of_quadratic_extension_elements() {
+        let element_test1 = Fq2::new(Fq::from(0), Fq::from(1));
+        let element_test2 = Fq2::new(Fq::from(1), Fq::from(0));
+        let element_test3 = Fq2::new(Fq::from(10), Fq::from(5));
+        let element_test4 = Fq2::new(Fq::from(5), Fq::from(10));
+        assert_eq!(Fq2::parity(&element_test1), true, "parity is the oddness of first non-zero coefficient of element represented over the prime field" );
+        assert_eq!(Fq2::parity(&element_test2), true);
+        assert_eq!(Fq2::parity(&element_test3), false);
+        assert_eq!(Fq2::parity(&element_test4), true);
+    }
+
+    #[test]
+    fn test_parity_of_cubic_extension_elements() {
+        let a1 = Fq2::new(Fq::from(0), Fq::from(0));
+        let a2 = Fq2::new(Fq::from(0), Fq::from(1));
+        let a3 = Fq2::new(Fq::from(1), Fq::from(0));
+        let a4 = Fq2::new(Fq::from(1), Fq::from(1));
+        let a5 = Fq2::new(Fq::from(0), Fq::from(2));
+
+        let element_test1 = Fq6::new(a1, a2, a3);
+        let element_test2 = Fq6::new(a2, a3, a4);
+        let element_test3 = Fq6::new(a3, a4, a1);
+        let element_test4 = Fq6::new(a4, a1, a2);
+        let element_test5 = Fq6::new(a1, a5, a2);
+
+        assert_eq!(Fq6::parity(&element_test1), true, "parity is the oddness of first non-zero coefficient of element represented over the prime field");
+        assert_eq!(Fq6::parity(&element_test2), true, "parity is the oddness of first non-zero coefficient of element represented over the prime field");
+        assert_eq!(Fq6::parity(&element_test3), true);
+        assert_eq!(Fq6::parity(&element_test4), true);
+        assert_eq!(Fq6::parity(&element_test5), false);
     }
 }

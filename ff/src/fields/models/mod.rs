@@ -2,6 +2,7 @@ use ark_std::{
     cmp::{Ord, Ordering, PartialOrd},
     fmt::{Display, Formatter, Result as FmtResult},
     io::{Read, Result as IoResult, Write},
+    iter,
     marker::PhantomData,
     ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign},
     str::FromStr,
@@ -10,8 +11,8 @@ use num_traits::{One, Zero};
 
 use crate::{
     biginteger::{
-        arithmetic as fa, BigInteger as _BigInteger, BigInteger256, BigInteger320, BigInteger384,
-        BigInteger448, BigInteger64, BigInteger768, BigInteger832,
+        arithmetic as fa, BigInt, BigInteger as _BigInteger, BigInteger256, BigInteger320,
+        BigInteger384, BigInteger448, BigInteger64, BigInteger768, BigInteger832,
     },
     bytes::{FromBytes, ToBytes},
     fields::{FftField, Field, FpParameters, LegendreSymbol, PrimeField, SquareRootField},

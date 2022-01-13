@@ -1,7 +1,7 @@
 use core::marker::PhantomData;
 
 use crate::{models::SWModelParameters, ModelParameters};
-use ark_ff::{batch_inversion, vec::Vec};
+use ark_ff::batch_inversion;
 use ark_poly::{univariate::DensePolynomial, Polynomial, UVPolynomial};
 
 use crate::{
@@ -16,12 +16,9 @@ type BaseField<MP> = <MP as ModelParameters>::BaseField;
 /// Trait defining the necessary parameters for the WB hash-to-curve method
 /// for the curves of Weierstrass form of:
 /// of y^2 = x^3 + a*x + b where b != 0 but `a` can be zero like BLS-381 curve.
-/// From [WB2019]
+/// From [\[WB2019\]]
 ///
-/// - [WB19] Wahby, R. S., & Boneh, D. (2019). Fast and simple constant-time
-///   hashing to the bls12-381 elliptic curve. IACR Transactions on
-///   Cryptographic Hardware and Embedded Systems, nil(nil), 154–179.
-///   http://dx.doi.org/10.46586/tches.v2019.i4.154-179
+/// - [\[WB19\]] <http://dx.doi.org/10.46586/tches.v2019.i4.154-179>
 pub trait WBParams: SWModelParameters + Sized {
     // The isogenous curve should be defined over the same base field but it can have
     // different scalar field type IsogenousCurveScalarField :
@@ -55,14 +52,13 @@ pub trait WBParams: SWModelParameters + Sized {
 }
 
 pub struct WBMap<P: WBParams> {
-    pub domain: Vec<u8>,
     swu_field_curve_hasher: SWUMap<P::IsogenousCurve>,
     curve_params: PhantomData<fn() -> P>,
 }
 
 impl<P: WBParams> MapToCurve<GroupAffine<P>> for WBMap<P> {
     /// Constructs a new map if `P` represents a valid map.
-    fn new_map_to_curve(domain: &[u8]) -> Result<Self, HashToCurveError> {
+    fn new_map_to_curve() -> Result<Self, HashToCurveError> {
         // Verifying that the isogeny maps the generator of the SWU curve into us
         let isogenous_curve_generator = GroupAffine::<P::IsogenousCurve>::new(
             P::IsogenousCurve::AFFINE_GENERATOR_COEFFS.0,
@@ -80,15 +76,14 @@ impl<P: WBParams> MapToCurve<GroupAffine<P>> for WBMap<P> {
         }
 
         Ok(WBMap {
-            domain: domain.to_vec(),
-            swu_field_curve_hasher: SWUMap::<P::IsogenousCurve>::new_map_to_curve(&domain).unwrap(),
+            swu_field_curve_hasher: SWUMap::<P::IsogenousCurve>::new_map_to_curve().unwrap(),
             curve_params: PhantomData,
         })
     }
 
     /// Map random field point to a random curve point
     /// inspired from
-    /// https://github.com/zcash/pasta_curves/blob/main/src/hashtocurve.rs
+    /// <https://github.com/zcash/pasta_curves/blob/main/src/hashtocurve.rs>
     fn map_to_curve(
         &self,
         element: <GroupAffine<P> as AffineCurve>::BaseField,

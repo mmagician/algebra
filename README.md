@@ -1,6 +1,6 @@
-<h1 align="center">arkworks::algebra</h1>
+<h1 style="text-align: center;">arkworks::algebra</h1>
 
-<p align="center">
+<p style="text-align: center;">
     <img src="https://github.com/arkworks-rs/algebra/workflows/CI/badge.svg?branch=master">
     <a href="https://github.com/arkworks-rs/algebra/blob/master/LICENSE-APACHE"><img src="https://img.shields.io/badge/license-APACHE-blue.svg"></a>
     <a href="https://github.com/arkworks-rs/algebra/blob/master/LICENSE-MIT"><img src="https://img.shields.io/badge/license-MIT-blue.svg"></a>
@@ -67,7 +67,7 @@ RUSTFLAGS="-C target-feature=+bmi2,+adx" cargo +nightly [test/build/bench] --fea
 To enable this in the `Cargo.toml` of your own projects, enable the `asm` feature flag:
 
 ```toml
-ark-ff = { version = "0.1", features = [ "asm" ] }
+ark-ff = { version = "0.3.0", features = [ "asm" ] }
 ```
 
 Note that because inline assembly support in Rust is currently unstable, using this backend requires using the Nightly compiler at the moment.

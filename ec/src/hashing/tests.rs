@@ -13,6 +13,7 @@ use crate::{
     ModelParameters,
 };
 use ark_ff::{
+    biginteger::BigInt,
     biginteger::BigInteger64,
     field_new,
     fields::{FftParameters, Fp64, Fp64Parameters, FpParameters},
@@ -36,13 +37,13 @@ impl FftParameters for F127Parameters {
     // sage: FF(3)^63
     // 126
     #[rustfmt::skip]
-    const TWO_ADIC_ROOT_OF_UNITY: BigInteger64 = BigInteger64([126]);
+    const TWO_ADIC_ROOT_OF_UNITY: BigInteger64 = BigInt::new([126]);
 }
 
 impl FpParameters for F127Parameters {
     /// MODULUS = 127
     #[rustfmt::skip]
-    const MODULUS: BigInteger64 = BigInteger64([127]);
+    const MODULUS: BigInteger64 = BigInt::new([127]);
 
     const MODULUS_BITS: u32 = 7;
 
@@ -54,11 +55,11 @@ impl FpParameters for F127Parameters {
     // sage: FF(2^64)
     // 2
     #[rustfmt::skip]
-    const R: BigInteger64 = BigInteger64([2]);
+    const R: BigInteger64 = BigInt::new([2]);
 
     /// R2 = R^2 % Self::MODULUS
     #[rustfmt::skip]
-    const R2: BigInteger64 = BigInteger64([4]);
+    const R2: BigInteger64 = BigInt::new([4]);
 
     /// INV = -MODULUS^{-1} mod 2^64
     // sage: R = Integers(2^64)
@@ -76,11 +77,11 @@ impl FpParameters for F127Parameters {
     // Montgomery conversion 3 * 2 = 6 % 127
     /// GENERATOR = 3
     #[rustfmt::skip]
-    const GENERATOR: BigInteger64 = BigInteger64([6]);
+    const GENERATOR: BigInteger64 = BigInt::new([6]);
 
     /// (Self::MODULUS - 1) / 2
     #[rustfmt::skip]
-    const MODULUS_MINUS_ONE_DIV_TWO: BigInteger64 = BigInteger64([63]);
+    const MODULUS_MINUS_ONE_DIV_TWO: BigInteger64 = BigInt::new([63]);
 
     // T and T_MINUS_ONE_DIV_TWO, where MODULUS - 1 = 2^S * T
     // For T coprime to 2
@@ -93,11 +94,11 @@ impl FpParameters for F127Parameters {
     // sage: (127-1)/2
     // 63
     #[rustfmt::skip]
-    const T: BigInteger64 = BigInteger64([63]);
+    const T: BigInteger64 = BigInt::new([63]);
 
     // (T - 1) / 2 = (63 - 1)/2
     #[rustfmt::skip]
-    const T_MINUS_ONE_DIV_TWO: BigInteger64 = BigInteger64([31]);
+    const T_MINUS_ONE_DIV_TWO: BigInteger64 = BigInt::new([31]);
 }
 
 const F127_ZERO: F127 = field_new!(F127, "0");
@@ -106,6 +107,11 @@ const F127_ONE: F127 = field_new!(F127, "1");
 struct TestSWUMapToCurveParams;
 
 impl ModelParameters for TestSWUMapToCurveParams {
+    const COFACTOR: &'static [u64] = &[1];
+
+    #[rustfmt::skip]
+    const COFACTOR_INV: F127 = F127_ONE;
+
     type BaseField = F127;
     type ScalarField = F127;
 }
@@ -130,11 +136,6 @@ impl SWModelParameters for TestSWUMapToCurveParams {
     /// COEFF_B = 1
     #[rustfmt::skip]
     const COEFF_B: F127 = field_new!(F127, "63");
-
-    const COFACTOR: &'static [u64] = &[1];
-
-    #[rustfmt::skip]
-    const COFACTOR_INV: F127 = F127_ONE;
 
     /// AFFINE_GENERATOR_COEFFS = (G1_GENERATOR_X, G1_GENERATOR_Y)
     const AFFINE_GENERATOR_COEFFS: (Self::BaseField, Self::BaseField) =
@@ -199,7 +200,7 @@ fn hash_arbitary_string_to_curve_swu() {
 /// elements should be mapped to curve successfully. everything can be mapped
 #[test]
 fn map_field_to_curve_swu() {
-    let test_map_to_curve = SWUMap::<TestSWUMapToCurveParams>::new_map_to_curve(&[0]).unwrap();
+    let test_map_to_curve = SWUMap::<TestSWUMapToCurveParams>::new_map_to_curve().unwrap();
 
     let mut map_range: Vec<GroupAffine<TestSWUMapToCurveParams>> = vec![];
     for current_field_element in 0..127 {
@@ -238,6 +239,11 @@ struct TestSWU127MapToIsogenousCurveParams;
 /// sage: E_isogenous.order()
 /// 127
 impl ModelParameters for TestSWU127MapToIsogenousCurveParams {
+    const COFACTOR: &'static [u64] = &[1];
+
+    #[rustfmt::skip]
+    const COFACTOR_INV: F127 = F127_ONE;
+
     type BaseField = F127;
     type ScalarField = F127;
 }
@@ -251,11 +257,6 @@ impl SWModelParameters for TestSWU127MapToIsogenousCurveParams {
     /// COEFF_B = 124
     #[rustfmt::skip]
     const COEFF_B: F127 = field_new!(F127, "124");
-
-    const COFACTOR: &'static [u64] = &[1];
-
-    #[rustfmt::skip]
-    const COFACTOR_INV: F127 = F127_ONE;
 
     /// AFFINE_GENERATOR_COEFFS = (G1_GENERATOR_X, G1_GENERATOR_Y)
     const AFFINE_GENERATOR_COEFFS: (Self::BaseField, Self::BaseField) =
@@ -276,6 +277,11 @@ impl SWUParams for TestSWU127MapToIsogenousCurveParams {
 struct TestWBF127MapToCurveParams;
 
 impl ModelParameters for TestWBF127MapToCurveParams {
+    const COFACTOR: &'static [u64] = &[1];
+
+    #[rustfmt::skip]
+    const COFACTOR_INV: F127 = F127_ONE;
+
     type BaseField = F127;
     type ScalarField = F127;
 }
@@ -289,11 +295,6 @@ impl SWModelParameters for TestWBF127MapToCurveParams {
     /// COEFF_B = 3
     #[rustfmt::skip]
     const COEFF_B: F127 = field_new!(F127, "3");
-
-    const COFACTOR: &'static [u64] = &[1];
-
-    #[rustfmt::skip]
-    const COFACTOR_INV: F127 = F127_ONE;
 
     /// AFFINE_GENERATOR_COEFFS = (G1_GENERATOR_X, G1_GENERATOR_Y)
     const AFFINE_GENERATOR_COEFFS: (Self::BaseField, Self::BaseField) =

@@ -113,5 +113,5 @@ impl<T: DynDigest + Clone> Expander for ExpanderXmd<T> {
     }
 }
 
-#[cfg(all(test, feature="std"))]
+#[cfg(all(test, feature = "std"))]
 mod tests;
