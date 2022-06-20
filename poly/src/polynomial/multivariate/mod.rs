@@ -58,6 +58,20 @@ pub trait Term:
 pub struct SparseTerm(Vec<(usize, usize)>);
 
 impl SparseTerm {
+    fn partial_evaluate<F: Field>(&self, point: &[Option<F>]) -> (F, Self) {
+        // assert `point` length equals number of terms ?
+        let mut accumulator = F::one();
+        let mut term: Vec<(usize, usize)> = Vec::new();
+        for (var, power) in self.iter() {
+            if let Some(p) = point[*var] {
+                accumulator *= p.pow(&[*power as u64]); // why u64? will this be large enough in practice?
+            } else {
+                term.push((*var, *power));
+            }
+        }
+        (accumulator, SparseTerm(term))
+    }
+
     /// Sums the powers of any duplicated variables. Assumes `term` is sorted.
     fn combine(term: &[(usize, usize)]) -> Vec<(usize, usize)> {
         let mut term_dedup: Vec<(usize, usize)> = Vec::new();
@@ -167,5 +181,21 @@ impl PartialOrd for SparseTerm {
 impl Ord for SparseTerm {
     fn cmp(&self, other: &Self) -> Ordering {
         self.partial_cmp(other).unwrap()
+    }
+}
+#[cfg(test)]
+mod test {
+    use super::*;
+    use ark_test_curves::{bls12_381::Fq as Fp};
+
+    #[test]
+    fn test_partial_eval() {
+        let mut point: Vec<Option<Fp>> = vec![None; 3];
+        point[0] = None;
+        point[1] = Some(Fp::from(8));
+        point[2] = Some(Fp::from(2));
+        let (coeff, term) = SparseTerm::partial_evaluate(&SparseTerm(vec![(0, 2), (1, 1), (2, 2)]), &point); // x0^2 * x1 * x2^2
+        assert_eq!(coeff, Fp::from(32));
+        assert_eq!(term.0, vec![(0, 2)]);
     }
 }

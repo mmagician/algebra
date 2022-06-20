@@ -58,6 +58,27 @@ impl<F: Field> Polynomial<F> for SparsePolynomial<F, SparseTerm> {
     }
 }
 
+impl<F: Field> SparsePolynomial<F, SparseTerm> {
+    /// Creates a new sparse polynomial, partially evaluated at the given `point`.
+    /// The `point` is a list of Field element Options, s.t.
+    /// Some(x) - evaluate the polynomial at that index
+    /// None - do not evaluate the polynomial at that index, leaving it as an invariant
+    /// The polynomial will be reduced in its num_variables 
+    /// to however many `None` elements are in `point`.
+    fn partial_evaluate(&self, point: &Vec<Option<F>>) -> Self {
+        assert!(point.len() >= self.num_vars, "Invalid evaluation domain");
+        let mut result = self.clone();
+        result.terms = cfg_into_iter!(&result.terms)
+            .map(|(coeff, term)| {
+                let (c, t) = term.partial_evaluate(point);
+                (*coeff * c, t)
+            })
+            .collect::<Vec<_>>();
+        result.num_vars = point.iter().filter(|&x| x.is_none()).count();
+        result
+    }
+}
+
 impl<F: Field> DenseMVPolynomial<F> for SparsePolynomial<F, SparseTerm> {
     /// Returns the number of variables in `self`
     fn num_vars(&self) -> usize {
