@@ -65,7 +65,7 @@ impl<F: Field> SparsePolynomial<F, SparseTerm> {
     /// None - do not evaluate the polynomial at that index, leaving it as an invariant
     /// The polynomial will be reduced in its num_variables 
     /// to however many `None` elements are in `point`.
-    fn partial_evaluate(&self, point: &Vec<Option<F>>) -> Self {
+    pub fn partial_evaluate(&self, point: &Vec<Option<F>>) -> Self {
         assert!(point.len() >= self.num_vars, "Invalid evaluation domain");
         let mut result = self.clone();
         result.terms = cfg_into_iter!(&result.terms)

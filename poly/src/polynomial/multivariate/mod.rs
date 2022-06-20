@@ -58,7 +58,7 @@ pub trait Term:
 pub struct SparseTerm(Vec<(usize, usize)>);
 
 impl SparseTerm {
-    fn partial_evaluate<F: Field>(&self, point: &[Option<F>]) -> (F, Self) {
+    pub fn partial_evaluate<F: Field>(&self, point: &[Option<F>]) -> (F, Self) {
         // assert `point` length equals number of terms ?
         let mut accumulator = F::one();
         let mut term: Vec<(usize, usize)> = Vec::new();
