@@ -1,6 +1,6 @@
 [package]
 name = "ark-algebra-bench-templates"
-version = "0.4.0-alpha.3"
+version = "0.4.0-alpha.4"
 authors = [ "arkworks contributors" ]
 description = "A benchmark library for finite fields and elliptic curves"
 homepage = "https://arkworks.rs"
@@ -17,9 +17,9 @@ edition = "2021"
 [dependencies]
 criterion = { version = "0.4.0", features = [ "html_reports" ] }
 ark-std = { version = "0.4.0-alpha", default-features = false }
-ark-ec = { version = "0.4.0-alpha", path = "../ec", default-features = false }
-ark-ff = { version = "0.4.0-alpha", path = "../ff", default-features = false }
-ark-serialize = { version = "0.4.0-alpha", path = "../serialize", default-features = false }
+ark-ec = { version = "0.4.0-alpha.4", path = "../ec", default-features = false }
+ark-ff = { version = "0.4.0-alpha.4", path = "../ff", default-features = false }
+ark-serialize = { version = "0.4.0-alpha.4", path = "../serialize", default-features = false }
 paste = { version = "1.0" }
 
 [features]
