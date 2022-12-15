@@ -28,7 +28,7 @@ pub use pairing::*;
 #[cfg(feature = "bls12_381_curve")]
 mod pairing {
     use super::*;
-    use ark_ec::bls12::{Bls12, Bls12Parameters, TwistType};
+    use ark_ec::bls12::{Bls12, Bls12Parameters, BlsPairingParams, TwistType};
 
     pub type Bls12_381 = Bls12<Parameters>;
 
@@ -45,6 +45,8 @@ mod pairing {
         type G1Parameters = self::g1::Parameters;
         type G2Parameters = self::g2::Parameters;
     }
+
+    impl BlsPairingParams for Parameters {}
 
     pub type G1Prepared = ark_ec::bls12::G1Prepared<Parameters>;
     pub type G2Prepared = ark_ec::bls12::G2Prepared<Parameters>;

@@ -42,7 +42,9 @@ pub trait Bls12Parameters: 'static + Sized {
         BaseField = Fp2<Self::Fp2Config>,
         ScalarField = <Self::G1Parameters as CurveConfig>::ScalarField,
     >;
+}
 
+pub trait BlsPairingParams: Bls12Parameters {
     fn multi_miller_loop(
         a: impl IntoIterator<Item = impl Into<G1Prepared<Self>>>,
         b: impl IntoIterator<Item = impl Into<G2Prepared<Self>>>,
@@ -199,7 +201,7 @@ impl<P: Bls12Parameters> Bls12<P> {
     }
 }
 
-impl<P: Bls12Parameters> Pairing for Bls12<P> {
+impl<P: BlsPairingParams> Pairing for Bls12<P> {
     type BaseField = <P::G1Parameters as CurveConfig>::BaseField;
     type ScalarField = <P::G1Parameters as CurveConfig>::ScalarField;
     type G1 = G1Projective<P>;
