@@ -10,6 +10,12 @@ on:
         options: 
           - alpha
           - patch
+      base_branch:
+        description: Branch to target
+          required: true
+          type: string
+          default: 'release'
+
 
 jobs:
   make-release-pr:
@@ -27,3 +33,4 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           version: ${{ inputs.version }}
           crate-release-all: true
+          base-branch: ${{ inputs.base_branch }} 
