@@ -10,6 +10,22 @@
 
 ### Bugfixes
 
+## v0.4.3
+
+### Breaking changes
+
+### Features
+
+- [\#634](https://github.com/arkworks-rs/algebra/pull/635) (all) Add support for hex, octal, and binary input in `BigInt` and `MontFp` macros.
+- [\#663](https://github.com/arkworks-rs/algebra/pull/663) Add From<i{int}> for signed integer conversion for Fields.
+
+### Improvements
+
+### Bugfixes
+
+- [\#638](https://github.com/arkworks-rs/algebra/pull/638) (`ark-poly`) Fix DensePolynomial add assign bug.
+- [\#642](https://github.com/arkworks-rs/algebra/pull/642) (`ark-poly`) Fix the size of GeneralEvaluationDomain.
+
 ## v0.4.2
 
 ### Breaking changes
