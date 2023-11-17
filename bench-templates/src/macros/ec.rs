@@ -204,33 +204,69 @@ macro_rules! ec_bench {
                     );
                 }
 
-                fn msm_131072(c: &mut $crate::criterion::Criterion) {
+                fn msm(c: &mut $crate::criterion::Criterion) {
                     use ark_ec::{scalar_mul::variable_base::VariableBaseMSM, CurveGroup};
-                    use ark_ff::PrimeField;
+                    use ark_ff::{PrimeField, BigInteger};
                     use ark_serialize::{CanonicalDeserialize, CanonicalSerialize};
                     use ark_std::UniformRand;
+                    use ark_std::rand::Rng;
 
-                    const SAMPLES: usize = 131072;
+                    // Parameters
+                    let n_points = 1 << 17;
+                    let size_middle = 60;
+                    let size_small = 20;
+
+                    fn small_scalar<F: PrimeField>(rng: &mut impl Rng, bit_size: usize) -> F::BigInt {
+                        let s = F::rand(rng).into_bigint();
+                        let mut bits = s.to_bits_le();
+
+                        bits.truncate(bit_size);
+                        bits.resize(F::MODULUS_BIT_SIZE as usize, false);
+
+                        F::BigInt::from_bits_le(&bits)
+                    }
 
                     let name = format!("{}::{}", $curve_name, stringify!($Group));
-                    let mut rng = ark_std::test_rng();
+                    let mut rng = &mut ark_std::test_rng();
 
-                    let v: Vec<_> = (0..SAMPLES)
+                    let points: Vec<_> = (0..n_points)
                         .map(|_| <$Group>::rand(&mut rng))
                         .collect();
-                    let v = <$Group>::normalize_batch(&v);
-                    let scalars: Vec<_> = (0..SAMPLES)
-                        .map(|_| Scalar::rand(&mut rng).into_bigint())
-                        .collect();
-                    c.bench_function(&format!("MSM for {name}"), |b| {
+
+                    let points = <$Group>::normalize_batch(&points);
+
+                    let scalars_full: Vec<_> = (0..n_points)
+                        .map(|_| Scalar::rand(rng).into_bigint()).collect();
+
+                    let scalars_middle: Vec<_> = (0..n_points)
+                        .map(|_| small_scalar::<Scalar>(rng, size_middle)).collect();
+
+                    let scalars_small: Vec<_> = (0..n_points)
+                        .map(|_| small_scalar::<Scalar>(rng, size_small)).collect();
+
+                    c.bench_function(&format!("MSM for {name} (scalar size: full, n. points: {n_points})"), |b| {
                         b.iter(|| {
-                            let result: $Group = VariableBaseMSM::msm_bigint(&v, &scalars);
+                            let result: $Group = VariableBaseMSM::msm_bigint(&points, &scalars_full);
+                            result
+                        })
+                    });
+
+                    c.bench_function(&format!("MSM for {name} (scalar size: {size_middle}, n. points: {n_points})"), |b| {
+                        b.iter(|| {
+                            let result: $Group = VariableBaseMSM::msm_bigint(&points, &scalars_middle);
+                            result
+                        })
+                    });
+
+                    c.bench_function(&format!("MSM for {name} (scalar size: {size_small}, n. points: {n_points})"), |b| {
+                        b.iter(|| {
+                            let result: $Group = VariableBaseMSM::msm_bigint(&points, &scalars_small);
                             result
                         })
                     });
                 }
 
-                $crate::criterion_group!(benches, rand, arithmetic, serialization, msm_131072,);
+                $crate::criterion_group!(benches, rand, arithmetic, serialization, msm);
             }
         }
     };
