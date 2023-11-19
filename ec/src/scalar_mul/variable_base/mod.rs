@@ -104,7 +104,7 @@ fn msm_bigint_wnaf<V: VariableBaseMSM>(
     let digits_count = (num_bits + c - 1) / c;
     let scalar_digits = scalars
         .iter()
-        .flat_map(|s| make_digits(s, c, num_bits))
+        .flat_map(|s| make_digits(s, c, digits_count))
         .collect::<Vec<_>>();
     let zero = V::zero();
     let window_sums: Vec<_> = ark_std::cfg_into_iter!(0..digits_count)
@@ -246,19 +246,16 @@ fn msm_bigint<V: VariableBaseMSM>(
 }
 
 // From: https://github.com/arkworks-rs/gemini/blob/main/src/kzg/msm/variable_base.rs#L20
-fn make_digits(a: &impl BigInteger, w: usize, num_bits: usize) -> impl Iterator<Item = i64> + '_ {
+fn make_digits(
+    a: &impl BigInteger,
+    w: usize,
+    digits_count: usize,
+) -> impl Iterator<Item = i64> + '_ {
     let scalar = a.as_ref();
     let radix: u64 = 1 << w;
     let window_mask: u64 = radix - 1;
 
     let mut carry = 0u64;
-    let num_bits = if num_bits == 0 {
-        a.num_bits() as usize
-    } else {
-        num_bits
-    };
-    let digits_count = (num_bits + w - 1) / w;
-
     (0..digits_count).into_iter().map(move |i| {
         // Construct a buffer of bits of the scalar, starting at `bit_offset`.
         let bit_offset = i * w;
